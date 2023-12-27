@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'users',
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
+    'corsheaders',
+    "cbcapi"
 ]
 
 MIDDLEWARE = [
@@ -51,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -166,3 +169,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.CustomUser'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 MEDIA_URL = '/media/'
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # Add the origin of your React app or any other frontend app
+]
+
+# Optional: Allow credentials (cookies, authentication headers) to be sent with the requests
+CORS_ALLOW_CREDENTIALS = True
+ALLOWED_HOSTS = ['localhost', 'yourdomain.com', '127.0.0.1']
