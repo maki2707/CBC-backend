@@ -21,3 +21,8 @@ class Strip(models.Model):
     def __str__(self):
         return self.nazivStrip
     
+class Kolekcija(models.Model):
+    idKolekcija = models.AutoField(primary_key=True)
+    datumDodavanja = models.DateField(auto_now_add=True)  # Automatically set the date when the object is created
+    idKorisnik = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    idStrip = models.ForeignKey('Strip', on_delete=models.CASCADE)
