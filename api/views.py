@@ -1,6 +1,7 @@
+from psycopg2 import IntegrityError
 from rest_framework import viewsets
-from .models import GlavniLik, Strip
-from .serializers import GlavniLikSerializer, StripSerializer
+from .models import GlavniLik, ListaZelja, Strip
+from .serializers import GlavniLikSerializer, ListaZeljaSerializer, StripSerializer
 from rest_framework.pagination import PageNumberPagination
 from .models import Kolekcija
 from .serializers import KolekcijaSerializer
@@ -8,6 +9,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from .models import ListaZelja, Strip
+from django.db.models import Count, F
+from django.db.models import Prefetch
+from django.db import models
+from rest_framework.generics import RetrieveAPIView
+
 class StandardResultsPagination(PageNumberPagination):
     page_size = 25
     page_size_query_param = 'page_size'
@@ -21,8 +30,18 @@ class StripViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
         character_id = self.request.query_params.get('character_id', None)
+        search_term = self.request.query_params.get('searchTerm', None)
+
         if character_id:
-            queryset = queryset.filter(idGlavniLik__idGlavniLik=character_id)  
+            queryset = queryset.filter(idGlavniLik__idGlavniLik=character_id)
+
+        if search_term:
+            # You can adjust the filtering logic as needed
+            queryset = queryset.filter(
+                models.Q(nazivStrip__icontains=search_term) |
+                models.Q(broj__icontains=search_term)
+            )
+
         return queryset
 
     def get_serializer_context(self):
@@ -76,3 +95,52 @@ class UserCollectionViewSet(viewsets.ReadOnlyModelViewSet):
             return Strip.objects.filter(idGlavniLik__idGlavniLik=character_id)
         # Return an empty queryset if conditions are not met
         return Strip.objects.none()
+    
+
+class ListaZeljaViewSet(viewsets.ModelViewSet):
+    queryset = ListaZelja.objects.all()
+    serializer_class = ListaZeljaSerializer
+
+class ListaZeljaGroupedByGlavniLik(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        # Prefetch related strips and order them by 'broj'
+        user_wishlist = ListaZelja.objects.filter(
+            idKorisnik=request.user
+        ).select_related('idStrip').prefetch_related(
+            Prefetch('idStrip', queryset=Strip.objects.order_by('broj'))
+        ).order_by('idStrip__idGlavniLik')
+        
+        grouped_data = {}
+        for item in user_wishlist:
+            glavni_lik_id = item.idStrip.idGlavniLik.idGlavniLik
+            if glavni_lik_id not in grouped_data:
+                grouped_data[glavni_lik_id] = {
+                    'idGlavniLik': glavni_lik_id,
+                    'nazivGlavniLik': item.idStrip.idGlavniLik.nazivGlavniLik,
+                    'items': []
+                }
+            grouped_data[glavni_lik_id]['items'].append(StripSerializer(item.idStrip).data)
+
+        # Sort items in each group by 'broj'
+        for key in grouped_data:
+            grouped_data[key]['items'].sort(key=lambda x: x['broj'])
+
+        response_data = list(grouped_data.values())
+        return Response(response_data)
+    
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        strip_id = request.data.get('idStrip')
+
+        try:
+            ListaZelja.objects.create(idKorisnik=user, idStrip_id=strip_id)
+            return Response({"message": "Item successfully added to wishlist"}, status=status.HTTP_201_CREATED)
+        except IntegrityError:
+            return Response({"error": "This item is already in your wishlist"}, status=status.HTTP_400_BAD_REQUEST)
+
+class ComicBookDetailView(RetrieveAPIView):
+    queryset = Strip.objects.all()
+    serializer_class = StripSerializer
+    lookup_field = 'idStrip'  # Change this line to use 'idStrip' instead of 'id'

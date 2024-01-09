@@ -26,3 +26,14 @@ class Kolekcija(models.Model):
     datumDodavanja = models.DateField(auto_now_add=True)  # Automatically set the date when the object is created
     idKorisnik = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     idStrip = models.ForeignKey('Strip', on_delete=models.CASCADE)
+
+class ListaZelja(models.Model):
+    idListaZelja = models.AutoField(primary_key=True)
+    idStrip = models.ForeignKey(Strip, on_delete=models.CASCADE)
+    idKorisnik = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('idStrip', 'idKorisnik')
+
+    def __str__(self):
+        return f"Wishlist {self.idListaZelja}"

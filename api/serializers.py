@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import GlavniLik, Strip,Kolekcija
+from .models import GlavniLik, ListaZelja, Strip,Kolekcija
 
 class GlavniLikSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,3 +23,8 @@ class KolekcijaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Kolekcija
         fields = '__all__'
+
+class ListaZeljaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ListaZelja
+        fields = '__all__'        
