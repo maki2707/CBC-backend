@@ -28,3 +28,38 @@ class ListaZeljaSerializer(serializers.ModelSerializer):
     class Meta:
         model = ListaZelja
         fields = '__all__'        
+
+
+from rest_framework import serializers
+from .models import StatusOglasa, Stanje, Oglas
+
+class StatusOglasaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StatusOglasa
+        fields = '__all__'
+
+class StanjeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Stanje
+        fields = '__all__'
+
+
+from rest_framework import serializers
+from .models import Oglas, Strip
+
+class OglasSerializer(serializers.ModelSerializer):
+    nazivStanje = serializers.CharField(source='idStanje.nazivStanja', read_only=True)
+    nazivStatus = serializers.CharField(source='idStatus.nazivStatus', read_only=True)
+    # Add new fields to fetch data from the Strip model
+    nazivStrip = serializers.CharField(source='idStrip.nazivStrip', read_only=True)
+    broj = serializers.IntegerField(source='idStrip.broj', read_only=True)
+    godinaIzdanja = serializers.IntegerField(source='idStrip.godinaIzdanja', read_only=True)
+
+    class Meta:
+        model = Oglas
+        fields = ['idOglas', 'datumObjave', 'cijena', 'idStrip', 'idKorisnik', 'idStatus', 'idStanje', 
+                  'nazivStanje', 'nazivStatus', 'nazivStrip', 'broj', 'godinaIzdanja']
+        extra_kwargs = {
+            'idOglas': {'read_only': True},
+            'datumObjave': {'read_only': True}
+        }

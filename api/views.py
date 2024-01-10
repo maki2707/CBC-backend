@@ -15,6 +15,7 @@ from .models import ListaZelja, Strip
 from django.db.models import Count, F
 from django.db.models import Prefetch
 from django.db import models
+from rest_framework import generics
 from rest_framework.generics import RetrieveAPIView
 
 class StandardResultsPagination(PageNumberPagination):
@@ -144,3 +145,36 @@ class ComicBookDetailView(RetrieveAPIView):
     queryset = Strip.objects.all()
     serializer_class = StripSerializer
     lookup_field = 'idStrip'  # Change this line to use 'idStrip' instead of 'id'
+
+
+
+from .models import StatusOglasa, Stanje, Oglas
+from .serializers import StatusOglasaSerializer, StanjeSerializer, OglasSerializer
+
+class StatusOglasaViewSet(viewsets.ModelViewSet):
+    queryset = StatusOglasa.objects.all()
+    serializer_class = StatusOglasaSerializer
+
+class StanjeViewSet(viewsets.ModelViewSet):
+    queryset = Stanje.objects.all()
+    serializer_class = StanjeSerializer
+
+class OglasViewSet(viewsets.ModelViewSet):
+    queryset = Oglas.objects.all()
+    serializer_class = OglasSerializer
+
+class OglasList(generics.ListAPIView):
+    serializer_class = OglasSerializer
+
+    def get_queryset(self):
+        queryset = Oglas.objects.all()
+        user_id = self.request.query_params.get('userId', None)  # Get user ID from query params
+        comicbook_id = self.kwargs.get('comicbook_id', None)  # Get comicbook ID from the URL
+
+        if user_id is not None:
+            queryset = queryset.filter(idKorisnik_id=user_id)  # Filter by user ID
+
+        if comicbook_id is not None:
+            queryset = queryset.filter(idStrip_id=comicbook_id)  # Filter by comicbook ID
+
+        return queryset
