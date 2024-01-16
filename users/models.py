@@ -9,7 +9,7 @@ from django.template.defaultfilters import slugify
 
 class CustomUser(AbstractUser):
     email = models.EmailField(_("email address"), unique=True)
-
+    mobile_number = models.CharField(max_length=15, blank=True, null=True)  
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = ["username"]
 
